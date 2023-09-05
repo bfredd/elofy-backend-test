@@ -39,6 +39,12 @@ RUN set -eux; \
     ;
 
 ###> recipes ###
+###> doctrine/doctrine-bundle ###
+RUN apk add --no-cache --virtual .pgsql-deps postgresql-dev; \
+	docker-php-ext-install -j"$(nproc)" pdo_pgsql; \
+	apk add --no-cache --virtual .pgsql-rundeps so:libpq.so.5; \
+	apk del .pgsql-deps
+###< doctrine/doctrine-bundle ###
 ###< recipes ###
 
 COPY --link docker/php/conf.d/app.ini $PHP_INI_DIR/conf.d/
@@ -120,3 +126,7 @@ COPY --link docker/caddy/Caddyfile /etc/caddy/Caddyfile
 FROM caddy_base AS caddy_prod
 
 COPY --from=php_prod --link /srv/app/public public/
+
+RUN apt-get update \
+     && docker-php-ext-install mysqli pdo pdo_mysql \
+     && docker-php-ext-enable pdo_mysql
